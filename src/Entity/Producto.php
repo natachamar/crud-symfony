@@ -26,6 +26,10 @@ class Producto
     #[ORM\Column]
     private ?int $stock = null;
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private $is_deleted = false;
+    
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +80,17 @@ class Producto
     {
         $this->stock = $stock;
 
+        return $this;
+    }
+
+    public function getIsDeleted(): ?bool
+    {
+        return $this->is_deleted;
+    }
+
+    public function setIsDeleted(bool $is_deleted): self
+    {
+        $this->is_deleted = $is_deleted;
         return $this;
     }
 }

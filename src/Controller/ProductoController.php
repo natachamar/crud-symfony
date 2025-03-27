@@ -9,7 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/producto')]
 final class ProductoController extends AbstractController
@@ -18,7 +18,7 @@ final class ProductoController extends AbstractController
     public function index(ProductoRepository $productoRepository): Response
     {
         return $this->render('producto/index.html.twig', [
-            'productos' => $productoRepository->findAll(),
+            'productos' => $productoRepository->findAllNotDeleted(),
         ]);
     }
 
@@ -38,7 +38,7 @@ final class ProductoController extends AbstractController
 
         return $this->render('producto/new.html.twig', [
             'producto' => $producto,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -64,18 +64,21 @@ final class ProductoController extends AbstractController
 
         return $this->render('producto/edit.html.twig', [
             'producto' => $producto,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/{id}', name: 'app_producto_delete', methods: ['POST'])]
-    public function delete(Request $request, Producto $producto, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/delete', name: 'app_producto_delete', methods: ['POST'])]
+    public function delete(Request $request, Producto $producto, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$producto->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($producto);
-            $entityManager->flush();
+        if (!$this->isCsrfTokenValid('delete' . $producto->getId(), $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Token CSRF inválido');
         }
 
+        $producto->setIsDeleted(true);
+        $em->persist($producto);
+        $em->flush(); 
+        
         return $this->redirectToRoute('app_producto_index', [], Response::HTTP_SEE_OTHER);
     }
 }

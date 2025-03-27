@@ -40,4 +40,12 @@ class ProductoRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+    public function findAllNotDeleted()
+{
+    return $this->createQueryBuilder('p')
+        ->andWhere('p.is_deleted = :isDeleted')
+        ->setParameter('isDeleted', false)
+        ->getQuery()
+        ->getResult();
+}
 }
