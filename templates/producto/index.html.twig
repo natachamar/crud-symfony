@@ -1,7 +1,36 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Productos{% endblock %}
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".delete-product-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let productId = this.getAttribute("data-id");
+                let form = this.closest(".delete-product-form"); // Obtener el formulario más cercano
+                
+                // Mostrar confirmación solo una vez
+                if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+                    return;
+                }
 
+                fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form) // Enviar los datos del formulario incluyendo el token CSRF
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById(`producto-${productId}`).remove(); // Eliminar fila sin recargar
+                    } else {
+                        alert("Error al eliminar el producto");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        });
+    });
+</script>
+{% endblock %}
 {% block body %}
     <h1>Productos</h1>
 
@@ -18,7 +47,7 @@
         </thead>
         <tbody>
         {% for producto in productos %}
-            <tr>
+            <tr id="producto-{{ producto.id }}">
                 <td>{{ producto.id }}</td>
                 <td>{{ producto.nombre }}</td>
                 <td>{{ producto.descripcion }}</td>
@@ -27,6 +56,7 @@
                 <td>
                     <a href="{{ path('app_producto_show', {'id': producto.id}) }}">Mostrar</a>
                     <a href="{{ path('app_producto_edit', {'id': producto.id}) }}">Editar</a>
+                     {% include 'producto/_delete_form.html.twig' with {'producto': producto} %}
                 </td>
             </tr>
         {% else %}

@@ -71,14 +71,20 @@ final class ProductoController extends AbstractController
     #[Route('/{id}/delete', name: 'app_producto_delete', methods: ['POST'])]
     public function delete(Request $request, Producto $producto, EntityManagerInterface $em): Response
     {
-        if (!$this->isCsrfTokenValid('delete' . $producto->getId(), $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Token CSRF inválido');
+        if ($request->isXmlHttpRequest()) { // Verificar si la solicitud es AJAX
+            $data = $request->request->all();
+
+            if (!$this->isCsrfTokenValid('delete' . $producto->getId(), $data['_token'])) {
+                return $this->json(['message' => 'Token CSRF inválido'], Response::HTTP_FORBIDDEN);
+            }
+
+            $producto->setIsDeleted(true);
+            $em->persist($producto);
+            $em->flush();
+
+            return $this->json(['message' => 'Producto eliminado correctamente']);
         }
 
-        $producto->setIsDeleted(true);
-        $em->persist($producto);
-        $em->flush(); 
-        
-        return $this->redirectToRoute('app_producto_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_producto_index');
     }
 }
