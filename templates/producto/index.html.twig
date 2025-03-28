@@ -2,25 +2,34 @@
 
 {% block title %}Productos{% endblock %}
 {% block javascripts %}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".delete-product-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                let productId = this.getAttribute("data-id");
-                let form = this.closest(".delete-product-form"); // Obtener el formulario más cercano
-                
-                // Mostrar confirmación solo una vez
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let table = $(".table").DataTable(); // Iniciar DataTables
+
+            $(".table").on("click", ".delete-product-btn", function (event) {
+                event.preventDefault(); // Evita que se recargue la página
+
+                let button = $(this);
+                let productId = button.data("id");
+                let form = button.closest(".delete-product-form");
+
                 if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
                     return;
                 }
 
-                fetch(form.action, {
+                fetch(form.attr("action"), {
                     method: "POST",
-                    body: new FormData(form) // Enviar los datos del formulario incluyendo el token CSRF
+                    body: new FormData(form[0]) // Enviar token CSRF
                 })
                 .then(response => {
                     if (response.ok) {
-                        document.getElementById(`producto-${productId}`).remove(); // Eliminar fila sin recargar
+                        table.row(button.closest("tr")).remove().draw(); // Eliminar fila en DataTables
                     } else {
                         alert("Error al eliminar el producto");
                     }
@@ -28,8 +37,7 @@
                 .catch(error => console.error("Error:", error));
             });
         });
-    });
-</script>
+    </script>
 {% endblock %}
 {% block body %}
     <h1>Productos</h1>
